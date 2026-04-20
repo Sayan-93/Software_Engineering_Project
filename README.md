@@ -13,6 +13,7 @@ order lifecycle tracking, AI recommendations, stock forecasting, and a chatbot.
 | Backend  | Flask, Flask-JWT-Extended, Flask-CORS           |
 | Database | SQLite via SQLAlchemy ORM                       |
 | AI       | scikit-learn / NumPy (forecasting), co-occurrence (recommendations) |
+| LLM(chat)| ollama(Llama 3.2) |
 
 ---
 
@@ -20,47 +21,97 @@ order lifecycle tracking, AI recommendations, stock forecasting, and a chatbot.
 
 ```
 FreshMart/
-├── backend/
-│   ├── app.py              ← Flask entry point
-│   ├── config.py           ← Configuration
-│   ├── seed.py             ← Database seeder (run once)
-│   ├── requirements.txt    ← Python dependencies
-│   ├── models/
-│   │   └── models.py       ← All 15 SQLAlchemy models
-│   ├── routes/
-│   │   ├── auth.py         ← /login /register
-│   │   ├── products.py     ← /products /categories
-│   │   ├── cart.py         ← /cart
-│   │   ├── orders.py       ← /orders
-│   │   ├── inventory.py    ← /inventory
-│   │   ├── packer.py       ← /packer/*
-│   │   ├── delivery.py     ← /delivery/*
-│   │   ├── admin.py        ← /admin/*
-│   │   ├── analytics.py    ← /analytics/*
-│   │   └── ai_routes.py    ← /chatbot /ai/*
-│   └── ai/
-│       ├── recommendations.py  ← Co-occurrence market basket
-│       ├── forecasting.py      ← Linear regression demand forecast
-│       └── chatbot.py          ← Rule-based customer chatbot
-└── frontend/
-    ├── index.html
-    ├── package.json
-    ├── vite.config.js      ← Proxy: /api → localhost:5000
-    └── src/
-        ├── main.js
-        ├── App.vue
-        ├── router/index.js         ← Auth guards + role redirects
-        ├── services/               ← All Axios API calls
-        ├── components/
-        │   ├── Navbar.vue          ← Role-based navigation
-        │   ├── Chatbot.vue         ← Floating chatbot widget
-        │   └── ProductCard.vue
-        └── pages/
-            ├── auth/         Login.vue, Register.vue
-            ├── customer/     Home, Products, Cart, Orders, OrderTracking
-            ├── admin/        Dashboard, Products, Inventory, Orders, Analytics
-            ├── packers/      AssignedOrders, PackingPanel
-            └── delivery/     DeliveryDashboard
+│
+├── backend/                      # Flask Backend (API + AI + DB)
+│   ├── app.py                   # Main entry point
+│   ├── config.py                # App configuration
+│   ├── requirements.txt         # Python dependencies
+│   ├── seed.py                  # Sample data seeding
+│   ├── run_index.py             # AI indexing
+│
+│   ├── models/                  # Database models
+│   │   └── models.py
+│
+│   ├── routes/                  # API routes (role-based)
+│   │   ├── auth.py
+│   │   ├── admin.py
+│   │   ├── products.py
+│   │   ├── cart.py
+│   │   ├── orders.py
+│   │   ├── inventory.py
+│   │   ├── delivery.py
+│   │   ├── packer.py
+│   │   ├── analytics.py
+│   │   └── ai_routes.py
+│
+│   ├── ai/                      # AI Features
+│   │   ├── chatbot.py           # Chatbot logic
+│   │   ├── recommendations.py   # Product recommendations
+│   │   ├── forecasting.py       # Demand prediction
+│   │   ├── retriever.py         # RAG retrieval logic
+│   │   ├── indexer.py           # Vector DB indexing
+│   │   └── routes.py            # AI endpoints
+│
+│   └── tests/                   # Backend testing
+│       ├── test_auth.py
+│       ├── test_products.py
+│       ├── test_orders.py
+│       └── ...
+│
+├── frontend/                    # Vue 3 Frontend
+│   ├── index.html
+│   ├── package.json
+│   ├── vite.config.js
+│
+│   └── src/
+│       ├── main.js
+│       ├── App.vue
+│
+│       ├── components/          # Reusable UI components
+│       │   ├── Navbar.vue
+│       │   ├── ProductCard.vue
+│       │   └── Chatbot.vue
+│
+│       ├── pages/               # Role-based pages
+│       │   ├── auth/
+│       │   │   ├── Login.vue
+│       │   │   └── Register.vue
+│       │
+│       │   ├── customer/
+│       │   │   ├── Home.vue
+│       │   │   ├── Products.vue
+│       │   │   ├── Cart.vue
+│       │   │   ├── Orders.vue
+│       │   │   └── OrderTracking.vue
+│       │
+│       │   ├── admin/
+│       │   │   ├── Dashboard.vue
+│       │   │   ├── Products.vue
+│       │   │   ├── Inventory.vue
+│       │   │   └── Analytics.vue
+│       │
+│       │   ├── delivery/
+│       │   │   └── DeliveryDashboard.vue
+│       │
+│       │   └── packers/
+│       │       ├── AssignedOrders.vue
+│       │       └── PackingPanel.vue
+│
+│       ├── router/              # Routing
+│       │   └── index.js
+│
+│       ├── services/            # API communication layer
+│       │   ├── apiClient.js
+│       │   ├── authService.js
+│       │   ├── productService.js
+│       │   ├── orderService.js
+│       │   └── ...
+│
+│       └── stores/              # State management
+│           └── cart.js
+│
+├── README.md                   # Project documentation
+└── .gitignore
 ```
 
 ---
@@ -70,6 +121,7 @@ FreshMart/
 ### Prerequisites
 - Python 3.9+
 - Node.js 18+
+- Ollama installed
 
 ---
 
@@ -98,7 +150,12 @@ Frontend runs on: **http://localhost:5173**
 
 ---
 
-### Step 3 — Open Browser
+### Step 3 — Run AI Model (Ollama)
+
+```bash
+ollama run llama3.2:1b
+```
+### Step 4 — Open App
 
 Go to: **http://localhost:5173**
 
@@ -157,9 +214,9 @@ Delivery person marks delivered
 
 | Feature               | How it works                                                 |
 |-----------------------|--------------------------------------------------------------|
-| Product Recommendations | Co-occurrence on order history; top 3 products per item  |
+| Product Recommendations | Cosine similarity on product vectors to suggest similar items  |
 | Stock Forecasting     | Linear regression on last 30-day sales per product           |
-| Chatbot               | Rule-based; handles order status, stock queries, delivery info |
+| Chatbot               | Ollama-powered (Llama 3.2)  |
 
 Admin can trigger AI manually from the Analytics page:
 - **Run Forecast** → predicts next 7 days demand
